@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741518921630",
+    "project_id": "app-movimientos-financieros",
+    "storage_bucket": "app-movimientos-financieros.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741518921630:android:8f6846fadee3018599508f",
+        "android_client_info": {
+          "package_name": "com.example.appmovimientos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2DrJXQdo1InRL2BsawJIGrG9z7AVMbEU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
