@@ -6,8 +6,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,10 +28,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.appmovimientos.R
 import com.example.appmovimientos.data.model.Account
-import com.example.appmovimientos.data.model.Category
 import com.example.appmovimientos.data.model.Expense
 import com.example.appmovimientos.ui.components.AnimatedButton
 import com.example.appmovimientos.ui.theme.AppColors
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +41,8 @@ fun MainScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     val cuentas = uiState.cuentas
     val movimientos = uiState.movimientos
@@ -53,162 +58,285 @@ fun MainScreen(
     val categorias = uiState.categorias
     val movimientosFiltrados = viewModel.getFilteredMovimientos()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("ECONOTE", fontWeight = FontWeight.Bold)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(300.dp),
+                drawerContainerColor = Color.White
+            ) {
+                EconoteDrawerContent(
+                    currentRoute = "main",
+                    onItemSelected = { route ->
+                        scope.launch { drawerState.close() }
+                        if (route != "main") {
+                            navController.navigate(route)
+                        }
+                    },
+                    onLogout = {
+                        scope.launch { drawerState.close() }
                         viewModel.signOut {
                             navController.navigate("login") {
                                 popUpTo("main") { inclusive = true }
                             }
                         }
-                    }) {
-                        Icon(Icons.Filled.ExitToApp, contentDescription = "Cerrar sesión")
                     }
-                }
-            )
+                )
+            }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
-                .padding(padding)
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = "Logo",
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("ECONOTE", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Filled.Menu, contentDescription = "Abrir menú")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { navController.navigate("perfil") }) {
+                            Icon(Icons.Filled.Person, contentDescription = "Perfil", tint = Color(0xFF6366F1))
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF8F9FA))
+                    .padding(padding)
             ) {
-                // 📊 Card de Balance Total
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .background(AppColors.PrimaryGradient)
-                                .padding(24.dp)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 📊 Card de Balance Total
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                         ) {
-                            Column {
-                                Text(
-                                    "Balance Total",
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    fontSize = 16.sp
-                                )
-                                Text(
-                                    "S/. %.2f".format(balanceTotal),
-                                    color = Color.White,
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                Icons.Filled.KeyboardArrowUp,
-                                                contentDescription = null,
-                                                tint = Color(0xFF4CAF50),
-                                                modifier = Modifier.size(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .background(AppColors.PrimaryGradient)
+                                    .padding(24.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        "Balance Total",
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        "S/. %.2f".format(balanceTotal),
+                                        color = Color.White,
+                                        fontSize = 32.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    Icons.Filled.KeyboardArrowUp,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF4CAF50),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Ingresos", color = Color.White, fontSize = 14.sp)
+                                            }
+                                            Text(
+                                                "S/. %.2f".format(ingresoTotal),
+                                                color = Color.White,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold
                                             )
-                                            Text("Ingresos", color = Color.White, fontSize = 14.sp)
                                         }
-                                        Text(
-                                            "S/. %.2f".format(ingresoTotal),
-                                            color = Color.White,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Column {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    Icons.Filled.ArrowDropDown,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFFF5722),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Gastos", color = Color.White, fontSize = 14.sp)
+                                            }
+                                            Text(
+                                                "S/. %.2f".format(gastoTotal),
+                                                color = Color.White,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
-                                    Column {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                }
+                            }
+                        }
+                    }
+
+                    // 🆕 Selector de Período
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    "Período de análisis",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2E7D32)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box {
+                                    OutlinedButton(
+                                        onClick = { expandedPeriodo = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Icon(Icons.Filled.DateRange, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(periodoSeleccionado)
+                                        Spacer(modifier = Modifier.weight(1f))
+                                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                                    }
+                                    DropdownMenu(
+                                        expanded = expandedPeriodo,
+                                        onDismissRequest = { expandedPeriodo = false }
+                                    ) {
+                                        listOf("Mes Actual", "Últimos 3 Meses", "Último Año", "Todo").forEach { periodo ->
+                                            DropdownMenuItem(
+                                                text = { Text(periodo) },
+                                                onClick = {
+                                                    viewModel.setPeriodo(periodo)
+                                                    expandedPeriodo = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 🆕 Top 5 Categorías con Más Gastos
+                    if (categoriasMasGastadas.isNotEmpty()) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            "Top 5 Categorías",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF2E7D32)
+                                        )
+                                        TextButton(onClick = { navController.navigate("reporteCategoria") }) {
+                                            Text("Ver todo", fontSize = 12.sp)
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    categoriasMasGastadas.forEach { (categoriaId, monto) ->
+                                        val categoria = categorias[categoriaId]
+                                        val porcentaje = if (gastoTotal > 0) (monto / gastoTotal) * 100 else 0.0
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             Icon(
-                                                Icons.Filled.ArrowDropDown,
+                                                when (categoria?.icon) {
+                                                    "Work" -> Icons.Filled.Build
+                                                    "Home" -> Icons.Filled.Home
+                                                    "Food" -> Icons.Filled.Place
+                                                    "Transport" -> Icons.Filled.Face
+                                                    "Health" -> Icons.Filled.Favorite
+                                                    else -> Icons.Filled.Menu
+                                                },
                                                 contentDescription = null,
                                                 tint = Color(0xFFFF5722),
                                                 modifier = Modifier.size(20.dp)
                                             )
-                                            Text("Gastos", color = Color.White, fontSize = 14.sp)
-                                        }
-                                        Text(
-                                            "S/. %.2f".format(gastoTotal),
-                                            color = Color.White,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                                            Spacer(modifier = Modifier.width(12.dp))
 
-                // 🆕 Selector de Período
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                "Período de análisis",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2E7D32)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Box {
-                                OutlinedButton(
-                                    onClick = { expandedPeriodo = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Icon(Icons.Filled.DateRange, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(periodoSeleccionado)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                                }
-                                DropdownMenu(
-                                    expanded = expandedPeriodo,
-                                    onDismissRequest = { expandedPeriodo = false }
-                                ) {
-                                    listOf("Mes Actual", "Últimos 3 Meses", "Último Año", "Todo").forEach { periodo ->
-                                        DropdownMenuItem(
-                                            text = { Text(periodo) },
-                                            onClick = {
-                                                viewModel.setPeriodo(periodo)
-                                                expandedPeriodo = false
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    categoria?.name ?: "Sin categoría",
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(6.dp)
+                                                        .background(Color(0xFFE0E0E0), RoundedCornerShape(3.dp))
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth(fraction = (porcentaje / 100).toFloat())
+                                                            .height(6.dp)
+                                                            .background(
+                                                                AppColors.ExpenseGradient,
+                                                                RoundedCornerShape(3.dp)
+                                                            )
+                                                    )
+                                                }
                                             }
-                                        )
+
+                                            Spacer(modifier = Modifier.width(12.dp))
+
+                                            Column(horizontalAlignment = Alignment.End) {
+                                                Text(
+                                                    "S/. %.0f".format(monto),
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFFFF5722)
+                                                )
+                                                Text(
+                                                    "%.1f%%".format(porcentaje),
+                                                    fontSize = 11.sp,
+                                                    color = Color.Gray
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                // 🆕 Top 5 Categorías con Más Gastos
-                if (categoriasMasGastadas.isNotEmpty()) {
+                    // 🆕 Gráfico de Tendencia Mensual
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -218,349 +346,253 @@ fun MainScreen(
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        "Top 5 Categorías",
+                                        "Tendencia de Gastos",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF2E7D32)
                                     )
-                                    TextButton(onClick = { navController.navigate("reporteCategoria") }) {
-                                        Text("Ver todo", fontSize = 12.sp)
+                                    TextButton(onClick = { navController.navigate("reporteTotal") }) {
+                                        Text("Ver detalle", fontSize = 12.sp)
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                                categoriasMasGastadas.forEach { (categoriaId, monto) ->
-                                    val categoria = categorias[categoriaId]
-                                    val porcentaje = if (gastoTotal > 0) (monto / gastoTotal) * 100 else 0.0
+                                val ultimos6Meses = gastosMensuales.toList()
+                                    .sortedByDescending { it.first }
+                                    .take(6)
+                                    .reversed()
+
+                                if (ultimos6Meses.isNotEmpty()) {
+                                    val maxGasto = ultimos6Meses.maxOfOrNull { it.second } ?: 1.0
 
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                            .height(120.dp),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
+                                        verticalAlignment = Alignment.Bottom
                                     ) {
-                                        Icon(
-                                            when (categoria?.icon) {
-                                                "Work" -> Icons.Filled.Build
-                                                "Home" -> Icons.Filled.Home
-                                                "Food" -> Icons.Filled.Place
-                                                "Transport" -> Icons.Filled.Face
-                                                "Health" -> Icons.Filled.Favorite
-                                                else -> Icons.Filled.Menu
-                                            },
-                                            contentDescription = null,
-                                            tint = Color(0xFFFF5722),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(12.dp))
+                                        ultimos6Meses.forEach { (mesAnio, monto) ->
+                                            val altura = ((monto / maxGasto) * 100).toFloat()
+                                            val mes = mesAnio.split("/").firstOrNull() ?: ""
+                                            val nombreMes = when(mes) {
+                                                "1" -> "Ene"
+                                                "2" -> "Feb"
+                                                "3" -> "Mar"
+                                                "4" -> "Abr"
+                                                "5" -> "May"
+                                                "6" -> "Jun"
+                                                "7" -> "Jul"
+                                                "8" -> "Ago"
+                                                "9" -> "Sep"
+                                                "10" -> "Oct"
+                                                "11" -> "Nov"
+                                                "12" -> "Dic"
+                                                else -> mes
+                                            }
 
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                categoria?.name ?: "Sin categoría",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(6.dp)
-                                                    .background(Color(0xFFE0E0E0), RoundedCornerShape(3.dp))
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                modifier = Modifier.weight(1f)
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .fillMaxWidth(fraction = (porcentaje / 100).toFloat())
-                                                        .height(6.dp)
+                                                        .width(32.dp)
+                                                        .height((altura * 0.8f).dp)
                                                         .background(
                                                             AppColors.ExpenseGradient,
-                                                            RoundedCornerShape(3.dp)
+                                                            RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                                                         )
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    nombreMes,
+                                                    fontSize = 10.sp,
+                                                    color = Color.Gray
                                                 )
                                             }
                                         }
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            Text(
-                                                "S/. %.0f".format(monto),
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFFFF5722)
-                                            )
-                                            Text(
-                                                "%.1f%%".format(porcentaje),
-                                                fontSize = 11.sp,
-                                                color = Color.Gray
-                                            )
-                                        }
                                     }
+                                } else {
+                                    Text(
+                                        "No hay datos suficientes",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(vertical = 32.dp)
+                                    )
                                 }
                             }
                         }
                     }
-                }
 
-                // 🆕 Gráfico de Tendencia Mensual
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                    // 📱 Botones de Acción Principales
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                AnimatedButton(
+                                    text = "Registrar",
+                                    icon = Icons.Filled.Add,
+                                    gradient = AppColors.ExpenseGradient,
+                                    onClick = { navController.navigate("registro") },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                AnimatedButton(
+                                    text = "Categorías",
+                                    icon = Icons.Filled.Menu,
+                                    gradient = AppColors.CategoryGradient,
+                                    onClick = { navController.navigate("categorias") },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            AnimatedButton(
+                                text = "Ver Reportes Completos",
+                                icon = Icons.Filled.Star,
+                                gradient = Brush.linearGradient(
+                                    colors = listOf(Color(0xFFFF6B6B), Color(0xFFFFE66D))
+                                ),
+                                onClick = { navController.navigate("reportes") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    // 💳 Sección de Cuentas
+                    item {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "Tendencia de Gastos",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2E7D32)
+                                    "Mis Cuentas (${cuentas.size})",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
-                                TextButton(onClick = { navController.navigate("reporteTotal") }) {
-                                    Text("Ver detalle", fontSize = 12.sp)
+                                TextButton(onClick = { navController.navigate("cuentas") }) {
+                                    Text("Administrar")
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            val ultimos6Meses = gastosMensuales.toList()
-                                .sortedByDescending { it.first }
-                                .take(6)
-                                .reversed()
-
-                            if (ultimos6Meses.isNotEmpty()) {
-                                val maxGasto = ultimos6Meses.maxOfOrNull { it.second } ?: 1.0
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(120.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.Bottom
+                            if (cuentas.isEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    ultimos6Meses.forEach { (mesAnio, monto) ->
-                                        val altura = ((monto / maxGasto) * 100).toFloat()
-                                        val mes = mesAnio.split("/").firstOrNull() ?: ""
-                                        val nombreMes = when(mes) {
-                                            "1" -> "Ene"
-                                            "2" -> "Feb"
-                                            "3" -> "Mar"
-                                            "4" -> "Abr"
-                                            "5" -> "May"
-                                            "6" -> "Jun"
-                                            "7" -> "Jul"
-                                            "8" -> "Ago"
-                                            "9" -> "Sep"
-                                            "10" -> "Oct"
-                                            "11" -> "Nov"
-                                            "12" -> "Dic"
-                                            else -> mes
-                                        }
-
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .width(32.dp)
-                                                    .height((altura * 0.8f).dp)
-                                                    .background(
-                                                        AppColors.ExpenseGradient,
-                                                        RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
-                                                    )
+                                    Box(
+                                        modifier = Modifier.padding(24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(
+                                                Icons.Filled.MailOutline,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(48.dp),
+                                                tint = Color.Gray
                                             )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                nombreMes,
-                                                fontSize = 10.sp,
-                                                color = Color.Gray
-                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text("No hay cuentas", color = Color.Gray, fontSize = 16.sp)
+                                            TextButton(onClick = { navController.navigate("nuevaCuenta") }) {
+                                                Text("Crear primera cuenta")
+                                            }
                                         }
                                     }
                                 }
                             } else {
-                                Text(
-                                    "No hay datos suficientes",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(vertical = 32.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // 📱 Botones de Acción Principales
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            AnimatedButton(
-                                text = "Registrar",
-                                icon = Icons.Filled.Add,
-                                gradient = AppColors.ExpenseGradient,
-                                onClick = { navController.navigate("registro") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            AnimatedButton(
-                                text = "Categorías",
-                                icon = Icons.Filled.Menu,
-                                gradient = AppColors.CategoryGradient,
-                                onClick = { navController.navigate("categorias") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        AnimatedButton(
-                            text = "Ver Reportes Completos",
-                            icon = Icons.Filled.Star,
-                            gradient = Brush.linearGradient(
-                                colors = listOf(Color(0xFFFF6B6B), Color(0xFFFFE66D))
-                            ),
-                            onClick = { navController.navigate("reportes") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-
-                // 💳 Sección de Cuentas
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Mis Cuentas (${cuentas.size})",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            TextButton(onClick = { navController.navigate("cuentas") }) {
-                                Text("Administrar")
-                            }
-                        }
-
-                        if (cuentas.isEmpty()) {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(24.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            Icons.Filled.MailOutline,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(48.dp),
-                                            tint = Color.Gray
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    cuentas.take(3).forEach { cuenta ->
+                                        CuentaCardCompacta(
+                                            cuenta = cuenta,
+                                            onClick = { cuentaSeleccionada = cuenta }
                                         )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("No hay cuentas", color = Color.Gray, fontSize = 16.sp)
-                                        TextButton(onClick = { navController.navigate("nuevaCuenta") }) {
-                                            Text("Crear primera cuenta")
+                                    }
+                                    if (cuentas.size > 3) {
+                                        TextButton(
+                                            onClick = { navController.navigate("cuentas") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Ver todas las cuentas (${cuentas.size})")
                                         }
                                     }
                                 }
                             }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                cuentas.take(3).forEach { cuenta ->
-                                    CuentaCardCompacta(
-                                        cuenta = cuenta,
-                                        onClick = { cuentaSeleccionada = cuenta }
-                                    )
-                                }
-                                if (cuentas.size > 3) {
-                                    TextButton(
-                                        onClick = { navController.navigate("cuentas") },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("Ver todas las cuentas (${cuentas.size})")
-                                    }
-                                }
-                            }
                         }
                     }
-                }
 
-                // 📋 Movimientos Recientes
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Movimientos Recientes",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                            TextButton(onClick = { navController.navigate("lista") }) {
-                                Text("Ver todos")
-                            }
-                        }
-
-                        if (movimientosFiltrados.isEmpty()) {
-                            Card(
+                    // 📋 Movimientos Recientes
+                    item {
+                        Column {
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
-                                    modifier = Modifier.padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(
-                                            Icons.Filled.DateRange,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(48.dp),
-                                            tint = Color.Gray
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("No hay movimientos", color = Color.Gray, fontSize = 16.sp)
-                                    }
+                                Text(
+                                    "Movimientos Recientes",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                TextButton(onClick = { navController.navigate("lista") }) {
+                                    Text("Ver todos")
                                 }
                             }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                movimientosFiltrados.take(5).forEach { movimiento ->
-                                    MovimientoCardCompacto(
-                                        movimiento = movimiento,
-                                        cuenta = cuentas.find { it.id == movimiento.accountId }
-                                    )
-                                }
-                                if (movimientosFiltrados.size > 5) {
-                                    TextButton(
-                                        onClick = { navController.navigate("lista") },
-                                        modifier = Modifier.fillMaxWidth()
+
+                            if (movimientosFiltrados.isEmpty()) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(32.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text("Ver todos los movimientos (${movimientos.size} total)")
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(
+                                                Icons.Filled.DateRange,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(48.dp),
+                                                tint = Color.Gray
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text("No hay movimientos", color = Color.Gray, fontSize = 16.sp)
+                                        }
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    movimientosFiltrados.take(5).forEach { movimiento ->
+                                        MovimientoCardCompacto(
+                                            movimiento = movimiento,
+                                            cuenta = cuentas.find { it.id == movimiento.accountId }
+                                        )
+                                    }
+                                    if (movimientosFiltrados.size > 5) {
+                                        TextButton(
+                                            onClick = { navController.navigate("lista") },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("Ver todos los movimientos (${movimientos.size} total)")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
@@ -583,6 +615,181 @@ fun MainScreen(
                 )
             }
         )
+    }
+}
+
+@Composable
+fun EconoteDrawerContent(
+    currentRoute: String,
+    onItemSelected: (String) -> Unit,
+    onLogout: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(300.dp)
+            .background(Color.White)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // --- Header ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFFEDE9FE), Color(0xFFDDD6FE))
+                        ),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Logo",
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                "ECONOTE",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color(0xFF1E293B)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider(color = Color(0xFFF1F5F9))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // --- Main Menu Items ---
+        DrawerItem(
+            icon = Icons.Filled.Home,
+            label = "Inicio",
+            isSelected = currentRoute == "main",
+            onClick = { onItemSelected("main") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.List,
+            label = "Movimientos",
+            isSelected = currentRoute == "lista",
+            onClick = { onItemSelected("lista") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.AccountBox,
+            label = "Mis cuentas",
+            isSelected = currentRoute == "cuentas",
+            onClick = { onItemSelected("cuentas") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.Menu,
+            label = "Categorías",
+            isSelected = currentRoute == "categorias",
+            onClick = { onItemSelected("categorias") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.Star,
+            label = "Reportes y estadísticas",
+            isSelected = currentRoute == "reportes",
+            onClick = { onItemSelected("reportes") }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "MI ECONOTE",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF94A3B8),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+
+        // --- Secondary Menu Items ---
+        DrawerItem(
+            icon = Icons.Filled.Person,
+            label = "Mi perfil",
+            isSelected = currentRoute == "perfil",
+            onClick = { onItemSelected("perfil") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.Settings,
+            label = "Configuración",
+            isSelected = currentRoute == "configuracion",
+            onClick = { onItemSelected("configuracion") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.Lock,
+            label = "Privacidad y seguridad",
+            isSelected = currentRoute == "privacidadSeguridad",
+            onClick = { onItemSelected("privacidadSeguridad") }
+        )
+        DrawerItem(
+            icon = Icons.Filled.Info,
+            label = "Ayuda y acerca de",
+            isSelected = currentRoute == "ayuda",
+            onClick = { onItemSelected("ayuda") }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider(color = Color(0xFFF1F5F9))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Logout ---
+        DrawerItem(
+            icon = Icons.Filled.ExitToApp,
+            label = "Cerrar sesión",
+            isSelected = false,
+            isDestructive = true,
+            onClick = onLogout
+        )
+    }
+}
+
+@Composable
+fun DrawerItem(
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    isDestructive: Boolean = false,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected) Color(0xFFEDE9FE) else Color.Transparent
+    val contentColor = if (isDestructive) Color(0xFFEF4444) else if (isSelected) Color(0xFF7C3AED) else Color(0xFF475569)
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = backgroundColor,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = label,
+                fontSize = 15.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = contentColor
+            )
+        }
     }
 }
 

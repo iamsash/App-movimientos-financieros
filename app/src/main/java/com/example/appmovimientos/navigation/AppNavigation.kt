@@ -10,6 +10,11 @@ import com.example.appmovimientos.ui.screens.cuentas.CuentasScreen
 import com.example.appmovimientos.ui.screens.cuentas.NuevaCuentaScreen
 import com.example.appmovimientos.ui.screens.login.LoginScreen
 import com.example.appmovimientos.ui.screens.main.MainScreen
+import com.example.appmovimientos.ui.screens.more.AyudaScreen
+import com.example.appmovimientos.ui.screens.more.CambiarPasswordScreen
+import com.example.appmovimientos.ui.screens.more.ConfiguracionScreen
+import com.example.appmovimientos.ui.screens.more.PerfilScreen
+import com.example.appmovimientos.ui.screens.more.PrivacidadSeguridadScreen
 import com.example.appmovimientos.ui.screens.movimientos.ListaScreen
 import com.example.appmovimientos.ui.screens.movimientos.RegistroScreen
 import com.example.appmovimientos.ui.screens.registro.RegistroUsuarioScreen
@@ -43,6 +48,8 @@ fun AppNavigation() {
         composable("politicaPrivacidad") { PoliticaPrivacidadScreen(navController) }
         composable("aceptarCuenta") { backStackEntry -> AceptacionScreen(navController, backStackEntry) }
         composable("legacyAceptacion") { LegacyAceptacionScreen(navController) }
+        composable("privacidadSeguridad") { PrivacidadSeguridadScreen(navController) }
+        composable("cambiarPassword") { CambiarPasswordScreen(navController) }
         composable("categorias") { CategoriasScreen(navController) }
         composable("nuevaCategoria") { NuevaCategoriaScreen(navController) }
         composable("cuentas") { CuentasScreen(navController) }
@@ -51,5 +58,8 @@ fun AppNavigation() {
         composable("reporteCategoria") { ReporteCategoriaScreen(navController) }
         composable("reporteMes") { ReporteMesScreen(navController) }
         composable("reporteTotal") { ReporteTotalScreen(navController) }
+        composable("perfil") { PerfilScreen(navController) }
+        composable("configuracion") { ConfiguracionScreen(navController) }
+        composable("ayuda") { AyudaScreen(navController) }
     }
 }

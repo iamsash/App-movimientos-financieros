@@ -1,6 +1,7 @@
 package com.example.appmovimientos.data.repository
 
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
@@ -20,8 +21,36 @@ class AuthRepository {
         return auth.createUserWithEmailAndPassword(email, pass).await()
     }
 
+    suspend fun changePassword(currentPass: String, newPass: String) {
+        val user = auth.currentUser ?: throw IllegalStateException("Usuario no autenticado")
+        val email = user.email ?: throw IllegalStateException("Correo de usuario no disponible")
+
+        // 1. Reauthenticate
+        val credential = EmailAuthProvider.getCredential(email, currentPass)
+        user.reauthenticate(credential).await()
+
+        // 2. Update password
+        user.updatePassword(newPass).await()
+    }
+
     suspend fun saveUserData(uid: String, userData: Map<String, Any>) {
         database.child("users").child(uid).setValue(userData).await()
+    }
+
+    suspend fun updateUserProfile(uid: String, nombre: String, usuario: String) {
+        val updates = mapOf(
+            "nombre" to nombre,
+            "usuario" to usuario
+        )
+        database.child("users").child(uid).updateChildren(updates).await()
+    }
+
+    suspend fun getUserProfile(uid: String): Map<String, String> {
+        val snapshot = database.child("users").child(uid).get().await()
+        val nombre = snapshot.child("nombre").getValue(String::class.java) ?: ""
+        val correo = snapshot.child("correo").getValue(String::class.java) ?: (auth.currentUser?.email ?: "")
+        val usuario = snapshot.child("usuario").getValue(String::class.java) ?: ""
+        return mapOf("nombre" to nombre, "correo" to correo, "usuario" to usuario)
     }
 
     suspend fun checkUserAcceptance(uid: String): Boolean {

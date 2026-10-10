@@ -1,5 +1,6 @@
 package com.example.appmovimientos.ui.screens.login
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -23,7 +25,70 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.appmovimientos.R
-import com.example.appmovimientos.ui.theme.AppColors
+
+@Composable
+fun TechFinancialBackground() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF13092A), // Dark navy purple top
+                        Color(0xFF0D061D), // Deep dark center
+                        Color(0xFF190B36)  // Rich purple bottom
+                    )
+                )
+            )
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+
+            // Diagonal and polygonal grid lines
+            drawLine(
+                color = Color(0xFFC084FC).copy(alpha = 0.25f),
+                start = androidx.compose.ui.geometry.Offset(0f, height * 0.2f),
+                end = androidx.compose.ui.geometry.Offset(width * 0.7f, 0f),
+                strokeWidth = 2f
+            )
+            drawLine(
+                color = Color(0xFF9333EA).copy(alpha = 0.2f),
+                start = androidx.compose.ui.geometry.Offset(width * 0.3f, height),
+                end = androidx.compose.ui.geometry.Offset(width, height * 0.6f),
+                strokeWidth = 1.5f
+            )
+            drawLine(
+                color = Color(0xFFE879F9).copy(alpha = 0.2f),
+                start = androidx.compose.ui.geometry.Offset(width, height * 0.2f),
+                end = androidx.compose.ui.geometry.Offset(width * 0.4f, height * 0.8f),
+                strokeWidth = 2f
+            )
+
+            // Draw subtle ascending financial bar charts on top right
+            val barWidth = 18f
+            val barSpacing = 12f
+            val startX = width - 150f
+            val startY = height * 0.25f
+            val heights = listOf(40f, 65f, 95f, 130f, 175f)
+
+            heights.forEachIndexed { index, h ->
+                val x = startX + (index * (barWidth + barSpacing))
+                val y = startY - h
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFE879F9).copy(alpha = 0.3f),
+                            Color(0xFF9333EA).copy(alpha = 0.15f)
+                        )
+                    ),
+                    topLeft = androidx.compose.ui.geometry.Offset(x, y + 100f),
+                    size = androidx.compose.ui.geometry.Size(barWidth, h)
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,10 +99,10 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.PrimaryGradient)
+        modifier = Modifier.fillMaxSize()
     ) {
+        TechFinancialBackground()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
