@@ -211,7 +211,8 @@ fun NuevaCuentaScreen(
                         }
                         DropdownMenu(
                             expanded = expandedTipo,
-                            onDismissRequest = { expandedTipo = false }
+                            onDismissRequest = { expandedTipo = false },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             tiposCuenta.forEach { tipoItem ->
                                 DropdownMenuItem(
@@ -254,7 +255,8 @@ fun NuevaCuentaScreen(
                             }
                             DropdownMenu(
                                 expanded = expandedBanco,
-                                onDismissRequest = { expandedBanco = false }
+                                onDismissRequest = { expandedBanco = false },
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 bancos.forEach { bancoItem ->
                                     DropdownMenuItem(

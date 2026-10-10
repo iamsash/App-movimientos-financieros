@@ -61,7 +61,7 @@ class MovimientosViewModel(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (monto.isBlank() || descripcion.isBlank() || fecha == "Selecciona fecha" || categoria == null || cuenta == null) {
+        if (monto.isBlank() || descripcion.isBlank() || fecha == "Selecciona fecha" || cuenta == null) {
             onError("Por favor completa todos los campos")
             return
         }
@@ -69,7 +69,7 @@ class MovimientosViewModel(
         val expense = Expense(
             amount = monto,
             description = descripcion,
-            categoryId = categoria.id,
+            categoryId = categoria?.id ?: "",
             accountId = cuenta.id,
             date = fecha,
             type = tipo

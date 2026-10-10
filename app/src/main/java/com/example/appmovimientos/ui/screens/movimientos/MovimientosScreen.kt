@@ -58,6 +58,26 @@ fun RegistroScreen(
     val categorias = uiState.categorias
     val cuentas = uiState.cuentas
 
+    val categoriasFiltradas = remember(categorias, tipo) {
+        categorias.filter { it.type == tipo }
+    }
+
+    LaunchedEffect(categoriasFiltradas, tipo) {
+        if (categoriasFiltradas.isNotEmpty()) {
+            if (categoriaSeleccionada == null || categoriaSeleccionada?.type != tipo) {
+                categoriaSeleccionada = categoriasFiltradas.first()
+            }
+        } else {
+            categoriaSeleccionada = null
+        }
+    }
+
+    LaunchedEffect(cuentas) {
+        if (cuentas.isNotEmpty() && cuentaSeleccionada == null) {
+            cuentaSeleccionada = cuentas.first()
+        }
+    }
+
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, day -> fecha = "$day/${month + 1}/$year" },
@@ -91,7 +111,7 @@ fun RegistroScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(32.dp)) {
-                    Box {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(
                             onClick = { expandedTipo = true },
                             modifier = Modifier.fillMaxWidth(),
@@ -108,14 +128,14 @@ fun RegistroScreen(
                         }
                         DropdownMenu(
                             expanded = expandedTipo,
-                            onDismissRequest = { expandedTipo = false }
+                            onDismissRequest = { expandedTipo = false },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Gasto") },
                                 onClick = {
                                     tipo = "Gasto"
                                     expandedTipo = false
-                                    categoriaSeleccionada = null
                                 },
                                 leadingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) }
                             )
@@ -124,7 +144,6 @@ fun RegistroScreen(
                                 onClick = {
                                     tipo = "Ingreso"
                                     expandedTipo = false
-                                    categoriaSeleccionada = null
                                 },
                                 leadingIcon = { Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null) }
                             )
@@ -157,9 +176,8 @@ fun RegistroScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    val categoriasFiltradas = categorias.filter { it.type == tipo }
                     if (categoriasFiltradas.isNotEmpty()) {
-                        Box {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(
                                 onClick = { expandedCategoria = true },
                                 modifier = Modifier.fillMaxWidth(),
@@ -176,7 +194,8 @@ fun RegistroScreen(
                             }
                             DropdownMenu(
                                 expanded = expandedCategoria,
-                                onDismissRequest = { expandedCategoria = false }
+                                onDismissRequest = { expandedCategoria = false },
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 categoriasFiltradas.forEach { categoria ->
                                     DropdownMenuItem(
@@ -206,7 +225,7 @@ fun RegistroScreen(
                     }
 
                     if (cuentas.isNotEmpty()) {
-                        Box {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(
                                 onClick = { expandedCuenta = true },
                                 modifier = Modifier.fillMaxWidth(),
@@ -223,7 +242,8 @@ fun RegistroScreen(
                             }
                             DropdownMenu(
                                 expanded = expandedCuenta,
-                                onDismissRequest = { expandedCuenta = false }
+                                onDismissRequest = { expandedCuenta = false },
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 cuentas.forEach { cuenta ->
                                     DropdownMenuItem(
@@ -292,7 +312,8 @@ fun RegistroScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         shape = RoundedCornerShape(12.dp),
                         enabled = monto.isNotBlank() && descripcion.isNotBlank() &&
-                                categoriaSeleccionada != null && cuentaSeleccionada != null
+                                cuentaSeleccionada != null &&
+                                (categoriasFiltradas.isEmpty() || categoriaSeleccionada != null)
                     ) {
                         Text("Guardar Movimiento", fontSize = 16.sp)
                     }
@@ -474,7 +495,7 @@ fun ListaScreen(
             },
             dismissButton = {
                 TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Cancelar")
+                    Text("Cancelarpx")
                 }
             }
         )
