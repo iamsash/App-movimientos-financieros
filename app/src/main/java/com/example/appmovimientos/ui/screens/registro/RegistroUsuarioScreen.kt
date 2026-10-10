@@ -1,7 +1,6 @@
 package com.example.appmovimientos.ui.screens.registro
 
 import android.os.Build
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -31,7 +29,6 @@ fun RegistroUsuarioScreen(
     viewModel: RegistroUsuarioViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -107,9 +104,8 @@ fun RegistroUsuarioScreen(
 
                     Button(
                         onClick = {
-                            viewModel.registrarUsuario {
-                                Toast.makeText(context, "Usuario registrado", Toast.LENGTH_SHORT).show()
-                                navController.popBackStack()
+                            if (viewModel.validarFormulario()) {
+                                navController.navigate("terminosCondiciones")
                             }
                         },
                         modifier = Modifier
@@ -117,11 +113,7 @@ fun RegistroUsuarioScreen(
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                        } else {
-                            Text("Registrar Usuario", fontSize = 16.sp)
-                        }
+                        Text("Continuar", fontSize = 16.sp)
                     }
 
                     uiState.errorMessage?.let {

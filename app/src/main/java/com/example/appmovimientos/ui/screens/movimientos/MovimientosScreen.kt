@@ -343,6 +343,7 @@ fun ListaScreen(
     val categorias = uiState.categorias.associateBy { it.id }
     val cuentas = uiState.cuentas.associateBy { it.id }
     var expenseToDelete by remember { mutableStateOf<Expense?>(null) }
+    var expenseToEdit by remember { mutableStateOf<Expense?>(null) }
     val isLoading = uiState.isLoading
 
     val totalIngresos = movimientos.filter { it.type == "Ingreso" }
@@ -462,13 +463,41 @@ fun ListaScreen(
                                 expense = expense,
                                 category = categorias[expense.categoryId],
                                 account = cuentas[expense.accountId],
-                                onDelete = { expenseToDelete = expense }
+                                onEdit = { expenseToEdit = expense }
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    expenseToEdit?.let { expense ->
+        AlertDialog(
+            onDismissRequest = { expenseToEdit = null },
+            title = { Text("Gestionar Movimiento", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Monto: S/. ${expense.amount}")
+                    Text("Descripción: ${expense.description}")
+                    Text("Tipo: ${expense.type}")
+                    Text("Fecha: ${expense.date}")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    expenseToEdit = null
+                    expenseToDelete = expense
+                }) {
+                    Text("Eliminar movimiento", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { expenseToEdit = null }) {
+                    Text("Cerrar")
+                }
+            }
+        )
     }
 
     expenseToDelete?.let { expense ->
@@ -495,7 +524,7 @@ fun ListaScreen(
             },
             dismissButton = {
                 TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Cancelarpx")
+                    Text("Cancelar")
                 }
             }
         )
@@ -507,7 +536,7 @@ fun ExpenseCard(
     expense: Expense,
     category: Category?,
     account: Account?,
-    onDelete: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val (backgroundBrush, amountColor, icon) = when (expense.type) {
@@ -582,8 +611,8 @@ fun ExpenseCard(
                 }
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = Color(0xFFE57373))
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Filled.Edit, contentDescription = "Gestionar", tint = Color(0xFF3B82F6))
             }
         }
     }

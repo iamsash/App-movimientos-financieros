@@ -73,7 +73,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = uiState.correo,
                         onValueChange = { viewModel.onCorreoChange(it) },
-                        label = { Text("Correo electrónico") },
+                        label = { Text("Correo electrónico o Usuario") },
                         leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -103,11 +103,18 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            viewModel.login {
-                                navController.navigate("main") {
-                                    popUpTo("login") { inclusive = true }
+                            viewModel.login(
+                                onNavigateMain = {
+                                    navController.navigate("main") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onNavigateTerminos = {
+                                    navController.navigate("legacyAceptacion") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
                                 }
-                            }
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -129,7 +136,8 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     TextButton(onClick = { navController.navigate("registroUsuario") }) {
-                        Text("¿No tienes cuenta? Regístrate aquí", color = Color.Gray)
+                        Text("¿No tienes cuenta?", color = Color.Gray)
+                        Text("Regístrate aquí", color = Color.Red)
                     }
                 }
             }

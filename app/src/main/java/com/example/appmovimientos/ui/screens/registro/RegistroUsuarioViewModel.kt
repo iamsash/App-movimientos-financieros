@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class RegistroUsuarioViewModel(
     private val authRepository: AuthRepository = AuthRepository()
@@ -70,40 +73,59 @@ class RegistroUsuarioViewModel(
         _uiState.update { it.copy(mostrarContrasena = !it.mostrarContrasena) }
     }
 
-    fun registrarUsuario(onSuccess: () -> Unit) {
-        val correoLimpio = correo.trim()
-        when {
-            nombre.isBlank() || correoLimpio.isBlank() || usuario.isBlank() || contrasena.isBlank() -> {
+    fun validarFormulario(): Boolean {
+        val correoLimpio = uiState.value.correo.trim()
+        return when {
+            uiState.value.nombre.isBlank() || correoLimpio.isBlank() || uiState.value.usuario.isBlank() || uiState.value.contrasena.isBlank() -> {
                 _uiState.update { it.copy(errorMessage = "Todos los campos son obligatorios.") }
+                false
             }
             !android.util.Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches() -> {
                 _uiState.update { it.copy(errorMessage = "El correo no es válido.") }
+                false
             }
-            contrasena.length < 6 -> {
+            uiState.value.contrasena.length < 6 -> {
                 _uiState.update { it.copy(errorMessage = "La contraseña debe tener al menos 6 caracteres.") }
+                false
             }
             else -> {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-                viewModelScope.launch {
-                    try {
-                        authRepository.createUserWithEmailAndPassword(correoLimpio, contrasena)
-                        val uid = authRepository.getCurrentUserUid()
-                        if (uid != null) {
-                            val userData = mapOf(
-                                "nombre" to nombre,
-                                "correo" to correoLimpio,
-                                "usuario" to usuario
-                            )
-                            authRepository.saveUserData(uid, userData)
-                            _uiState.update { it.copy(isLoading = false) }
-                            onSuccess()
-                        } else {
-                            _uiState.update { it.copy(isLoading = false, errorMessage = "Error al obtener UID del usuario") }
-                        }
-                    } catch (e: Exception) {
-                        _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
-                    }
+                _uiState.update { it.copy(errorMessage = null) }
+                true
+            }
+        }
+    }
+
+    fun registrarUsuario(onSuccess: () -> Unit) {
+        if (!validarFormulario()) return
+
+        val correoLimpio = uiState.value.correo.trim()
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        viewModelScope.launch {
+            try {
+                authRepository.createUserWithEmailAndPassword(correoLimpio, uiState.value.contrasena)
+                val uid = authRepository.getCurrentUserUid()
+                if (uid != null) {
+                    val fechaActual = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    val aceptacionMap = mapOf(
+                        "aceptado" to true,
+                        "versionTerminos" to "1.0",
+                        "versionPrivacidad" to "1.0",
+                        "fechaAceptacion" to fechaActual
+                    )
+                    val userData = mapOf(
+                        "nombre" to uiState.value.nombre,
+                        "correo" to correoLimpio,
+                        "usuario" to uiState.value.usuario,
+                        "aceptacionTerminos" to aceptacionMap
+                    )
+                    authRepository.saveUserData(uid, userData)
+                    _uiState.update { it.copy(isLoading = false) }
+                    onSuccess()
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Error al obtener UID del usuario") }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
     }

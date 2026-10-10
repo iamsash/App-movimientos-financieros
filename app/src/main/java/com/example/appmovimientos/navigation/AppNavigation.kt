@@ -17,6 +17,11 @@ import com.example.appmovimientos.ui.screens.reportes.ReporteCategoriaScreen
 import com.example.appmovimientos.ui.screens.reportes.ReporteMesScreen
 import com.example.appmovimientos.ui.screens.reportes.ReporteTotalScreen
 import com.example.appmovimientos.ui.screens.reportes.ReportesScreen
+import com.example.appmovimientos.ui.screens.terminos.AceptacionScreen
+import com.example.appmovimientos.ui.screens.terminos.LegacyAceptacionScreen
+import com.example.appmovimientos.ui.screens.terminos.PoliticaPrivacidadScreen
+import com.example.appmovimientos.ui.screens.terminos.TerminosCondicionesScreen
+import com.example.appmovimientos.ui.screens.terminos.TerminosUsoScreen
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -33,6 +38,11 @@ fun AppNavigation() {
         composable("registro") { RegistroScreen(navController) }
         composable("lista") { ListaScreen(navController) }
         composable("registroUsuario") { RegistroUsuarioScreen(navController) }
+        composable("terminosCondiciones") { TerminosCondicionesScreen(navController) }
+        composable("terminosUso") { TerminosUsoScreen(navController) }
+        composable("politicaPrivacidad") { PoliticaPrivacidadScreen(navController) }
+        composable("aceptarCuenta") { backStackEntry -> AceptacionScreen(navController, backStackEntry) }
+        composable("legacyAceptacion") { LegacyAceptacionScreen(navController) }
         composable("categorias") { CategoriasScreen(navController) }
         composable("nuevaCategoria") { NuevaCategoriaScreen(navController) }
         composable("cuentas") { CuentasScreen(navController) }

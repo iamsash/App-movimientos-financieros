@@ -48,21 +48,43 @@ class LoginViewModel(
         _uiState.update { it.copy(mostrarContrasena = !it.mostrarContrasena) }
     }
 
-    fun login(onSuccess: () -> Unit) {
-        val correoLimpio = correo.trim()
-        if (correoLimpio.isBlank() || contrasena.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Por favor ingresa correo y contraseña") }
+    fun login(onNavigateMain: () -> Unit, onNavigateTerminos: () -> Unit) {
+        val inputLimpio = correo.trim()
+        if (inputLimpio.isBlank() || contrasena.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Por favor ingresa correo o usuario y contraseña") }
             return
         }
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
             try {
-                authRepository.signInWithEmailAndPassword(correoLimpio, contrasena)
-                _uiState.update { it.copy(isLoading = false) }
-                onSuccess()
+                val emailToSign = if (inputLimpio.contains("@")) {
+                    inputLimpio
+                } else {
+                    authRepository.getEmailByUsername(inputLimpio)
+                        ?: throw IllegalArgumentException("El usuario ingresado no existe o no tiene correo asociado.")
+                }
+                authRepository.signInWithEmailAndPassword(emailToSign, contrasena)
+                val uid = authRepository.getCurrentUserUid()
+                if (uid != null) {
+                    val hasAccepted = try {
+                        authRepository.checkUserAcceptance(uid)
+                    } catch (e: Exception) {
+                        authRepository.signOut()
+                        throw Exception("No se pudo verificar la aceptación de términos por error de conexión.")
+                    }
+
+                    _uiState.update { it.copy(isLoading = false) }
+                    if (hasAccepted) {
+                        onNavigateMain()
+                    } else {
+                        onNavigateTerminos()
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Error al obtener usuario autenticado") }
+                }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Error al iniciar sesión") }
             }
         }
     }
