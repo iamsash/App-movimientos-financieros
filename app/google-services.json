@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "741518921630",
+    "firebase_url": "https://app-movimientos-financieros-default-rtdb.firebaseio.com",
     "project_id": "app-movimientos-financieros",
     "storage_bucket": "app-movimientos-financieros.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.appmovimientos"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "741518921630-j1uma69mgst50e01l49mve1v6hsf9p3r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.appmovimientos",
+            "certificate_hash": "2c9e46c9368cead2169b35aa5ccb2bc70c90ca44"
+          }
+        },
+        {
+          "client_id": "741518921630-slb7lv7qicfd4etmdclckod0u0he52t5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD2DrJXQdo1InRL2BsawJIGrG9z7AVMbEU"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741518921630-slb7lv7qicfd4etmdclckod0u0he52t5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

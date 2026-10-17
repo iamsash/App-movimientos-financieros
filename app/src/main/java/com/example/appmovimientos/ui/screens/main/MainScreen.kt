@@ -1,6 +1,7 @@
 package com.example.appmovimientos.ui.screens.main
 
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,9 +30,67 @@ import androidx.navigation.NavHostController
 import com.example.appmovimientos.R
 import com.example.appmovimientos.data.model.Account
 import com.example.appmovimientos.data.model.Expense
-import com.example.appmovimientos.ui.components.AnimatedButton
 import com.example.appmovimientos.ui.theme.AppColors
 import kotlinx.coroutines.launch
+
+@Composable
+fun MonvoraLogo() {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF60A5FA), // Light blue top-left
+                        Color(0xFF9333EA), // Violet
+                        Color(0xFFEC4899)  // Pink bottom-right
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(30.dp)) {
+            val w = size.width
+            val h = size.height
+
+            val stroke = 3.8.dp.toPx()
+
+            // Draw white M
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w * 0.16f, h * 0.75f)
+                lineTo(w * 0.16f, h * 0.35f)
+                lineTo(w * 0.38f, h * 0.65f)
+                lineTo(w * 0.60f, h * 0.35f)
+            }
+            drawPath(
+                path = path,
+                color = Color.White,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = stroke,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+
+            // 3 cyan/light blue financial bars on the right
+            val barW = 2.8.dp.toPx()
+            val spacing = 2.dp.toPx()
+            val startX = w * 0.67f
+            val barHeights = listOf(h * 0.3f, h * 0.5f, h * 0.72f)
+
+            barHeights.forEachIndexed { index, bh ->
+                val bx = startX + index * (barW + spacing)
+                val by = h * 0.8f - bh
+                drawRect(
+                    color = Color(0xFF38BDF8), // Bright cyan
+                    topLeft = androidx.compose.ui.geometry.Offset(bx, by),
+                    size = androidx.compose.ui.geometry.Size(barW, bh)
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,32 +149,71 @@ fun MainScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "Logo",
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("ECONOTE", fontWeight = FontWeight.Bold)
+                            MonvoraLogo()
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    "MONVORA",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 18.sp,
+                                    color = Color.White,
+                                    letterSpacing = 1.sp
+                                )
+                                Text(
+                                    "TUS FINANZAS, TU CAMINO",
+                                    fontSize = 9.sp,
+                                    color = Color.White.copy(alpha = 0.75f),
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.2.sp
+                                )
+                            }
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Abrir menú")
+                            Icon(Icons.Filled.Menu, contentDescription = "Abrir menú", tint = Color.White)
                         }
                     },
                     actions = {
                         IconButton(onClick = { navController.navigate("perfil") }) {
-                            Icon(Icons.Filled.Person, contentDescription = "Perfil", tint = Color(0xFF6366F1))
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(Color(0xFF5B21B6), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Person, contentDescription = "Perfil", tint = Color.White, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0F0728))
+                )
+            },
+            bottomBar = {
+                EconoteBottomBar(
+                    currentRoute = "main",
+                    onTabSelected = { route ->
+                        if (route != "main") {
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                            }
                         }
                     }
                 )
             }
         ) { padding ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF8F9FA))
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF0F0728), // Dark navy purple
+                                Color(0xFF1E103F), // Rich purple
+                                Color(0xFF13092A)  // Deep dark
+                            )
+                        )
+                    )
                     .padding(padding)
             ) {
                 LazyColumn(
@@ -127,110 +225,133 @@ fun MainScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(20.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .background(AppColors.PrimaryGradient)
-                                    .padding(24.dp)
+                                    .background(
+                                        Brush.linearGradient(
+                                            colors = listOf(
+                                                Color(0xFF6366F1), // Indigo
+                                                Color(0xFF8B5CF6), // Purple
+                                                Color(0xFFEC4899)  // Pink
+                                            )
+                                        )
+                                    )
+                                    .padding(20.dp)
                             ) {
                                 Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            "Balance Total",
+                                            color = Color.White.copy(alpha = 0.85f),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+
+                                        // Selector de período estilo pastilla
+                                        Surface(
+                                            onClick = { expandedPeriodo = true },
+                                            shape = RoundedCornerShape(20.dp),
+                                            color = Color.White.copy(alpha = 0.2f)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(Icons.Filled.DateRange, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(periodoSeleccionado, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                            }
+                                            DropdownMenu(
+                                                expanded = expandedPeriodo,
+                                                onDismissRequest = { expandedPeriodo = false }
+                                            ) {
+                                                listOf("Mes Actual", "Últimos 3 Meses", "Último Año", "Todo").forEach { periodo ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(periodo) },
+                                                        onClick = {
+                                                            viewModel.setPeriodo(periodo)
+                                                            expandedPeriodo = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
                                     Text(
-                                        "Balance Total",
-                                        color = Color.White.copy(alpha = 0.8f),
-                                        fontSize = 16.sp
-                                    )
-                                    Text(
-                                        "S/. %.2f".format(balanceTotal),
+                                        "S/ %.2f".format(balanceTotal),
                                         color = Color.White,
                                         fontSize = 32.sp,
                                         fontWeight = FontWeight.Bold
                                     )
+
                                     Spacer(modifier = Modifier.height(16.dp))
+
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        Column {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    Icons.Filled.KeyboardArrowUp,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFF4CAF50),
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Text("Ingresos", color = Color.White, fontSize = 14.sp)
-                                            }
-                                            Text(
-                                                "S/. %.2f".format(ingresoTotal),
-                                                color = Color.White,
-                                                fontSize = 18.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        Column {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    Icons.Filled.ArrowDropDown,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFFFF5722),
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Text("Gastos", color = Color.White, fontSize = 14.sp)
-                                            }
-                                            Text(
-                                                "S/. %.2f".format(gastoTotal),
-                                                color = Color.White,
-                                                fontSize = 18.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // 🆕 Selector de Período
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text(
-                                    "Período de análisis",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2E7D32)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Box {
-                                    OutlinedButton(
-                                        onClick = { expandedPeriodo = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Icon(Icons.Filled.DateRange, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(periodoSeleccionado)
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-                                    }
-                                    DropdownMenu(
-                                        expanded = expandedPeriodo,
-                                        onDismissRequest = { expandedPeriodo = false }
-                                    ) {
-                                        listOf("Mes Actual", "Últimos 3 Meses", "Último Año", "Todo").forEach { periodo ->
-                                            DropdownMenuItem(
-                                                text = { Text(periodo) },
-                                                onClick = {
-                                                    viewModel.setPeriodo(periodo)
-                                                    expandedPeriodo = false
+                                        // Mini Card Ingresos
+                                        Card(
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .background(Color(0xFF10B981), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                                                 }
-                                            )
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                Column {
+                                                    Text("Ingresos", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+                                                    Text("S/ %.2f".format(ingresoTotal), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            }
+                                        }
+
+                                        // Mini Card Gastos
+                                        Card(
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(14.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .background(Color(0xFFEF4444), CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                                }
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                Column {
+                                                    Text("Gastos", color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+                                                    Text("S/ %.2f".format(gastoTotal), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -243,10 +364,11 @@ fun MainScreen(
                         item {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
+                                Column(modifier = Modifier.padding(20.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -256,10 +378,10 @@ fun MainScreen(
                                             "Top 5 Categorías",
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF2E7D32)
+                                            color = Color(0xFF1E293B)
                                         )
                                         TextButton(onClick = { navController.navigate("reporteCategoria") }) {
-                                            Text("Ver todo", fontSize = 12.sp)
+                                            Text("Ver todo →", fontSize = 13.sp, color = Color(0xFF6366F1), fontWeight = FontWeight.SemiBold)
                                         }
                                     }
 
@@ -272,61 +394,70 @@ fun MainScreen(
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(vertical = 6.dp),
+                                                .padding(vertical = 8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Icon(
-                                                when (categoria?.icon) {
-                                                    "Work" -> Icons.Filled.Build
-                                                    "Home" -> Icons.Filled.Home
-                                                    "Food" -> Icons.Filled.Place
-                                                    "Transport" -> Icons.Filled.Face
-                                                    "Health" -> Icons.Filled.Favorite
-                                                    else -> Icons.Filled.Menu
-                                                },
-                                                contentDescription = null,
-                                                tint = Color(0xFFFF5722),
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .background(Color(0xFFF1F5F9), CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    when (categoria?.icon) {
+                                                        "Work" -> Icons.Filled.Build
+                                                        "Home" -> Icons.Filled.Home
+                                                        "Food" -> Icons.Filled.Place
+                                                        "Transport" -> Icons.Filled.Face
+                                                        "Health" -> Icons.Filled.Favorite
+                                                        else -> Icons.Filled.Menu
+                                                    },
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFEF4444),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
                                             Spacer(modifier = Modifier.width(12.dp))
 
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     categoria?.name ?: "Sin categoría",
                                                     fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Medium
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color(0xFF1E293B)
                                                 )
+                                                Spacer(modifier = Modifier.height(4.dp))
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .height(6.dp)
-                                                        .background(Color(0xFFE0E0E0), RoundedCornerShape(3.dp))
+                                                        .height(8.dp)
+                                                        .background(Color(0xFFF1F5F9), RoundedCornerShape(4.dp))
                                                 ) {
                                                     Box(
                                                         modifier = Modifier
-                                                            .fillMaxWidth(fraction = (porcentaje / 100).toFloat())
-                                                            .height(6.dp)
+                                                            .fillMaxWidth(fraction = (porcentaje / 100).toFloat().coerceIn(0f, 1f))
+                                                            .height(8.dp)
                                                             .background(
-                                                                AppColors.ExpenseGradient,
-                                                                RoundedCornerShape(3.dp)
+                                                                Color(0xFFEC4899),
+                                                                RoundedCornerShape(4.dp)
                                                             )
                                                     )
                                                 }
                                             }
 
-                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Spacer(modifier = Modifier.width(16.dp))
 
                                             Column(horizontalAlignment = Alignment.End) {
                                                 Text(
-                                                    "S/. %.0f".format(monto),
+                                                    "S/ %.2f".format(monto),
                                                     fontSize = 14.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFFFF5722)
+                                                    color = Color(0xFFEF4444)
                                                 )
                                                 Text(
                                                     "%.1f%%".format(porcentaje),
                                                     fontSize = 11.sp,
-                                                    color = Color.Gray
+                                                    color = Color(0xFF94A3B8)
                                                 )
                                             }
                                         }
@@ -340,22 +471,24 @@ fun MainScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Column(modifier = Modifier.padding(20.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         "Tendencia de Gastos",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2E7D32)
+                                        color = Color(0xFF1E293B)
                                     )
                                     TextButton(onClick = { navController.navigate("reporteTotal") }) {
-                                        Text("Ver detalle", fontSize = 12.sp)
+                                        Text("Ver detalle →", fontSize = 13.sp, color = Color(0xFF6366F1), fontWeight = FontWeight.SemiBold)
                                     }
                                 }
 
@@ -372,7 +505,7 @@ fun MainScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(120.dp),
+                                            .height(130.dp),
                                         horizontalArrangement = Arrangement.SpaceEvenly,
                                         verticalAlignment = Alignment.Bottom
                                     ) {
@@ -401,29 +534,38 @@ fun MainScreen(
                                             ) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .width(32.dp)
-                                                        .height((altura * 0.8f).dp)
+                                                        .width(28.dp)
+                                                        .height((altura * 0.9f).coerceAtLeast(10f).dp)
                                                         .background(
-                                                            AppColors.ExpenseGradient,
+                                                            Brush.verticalGradient(
+                                                                colors = listOf(Color(0xFFF43F5E), Color(0xFFEC4899))
+                                                            ),
                                                             RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
                                                         )
                                                 )
-                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Spacer(modifier = Modifier.height(6.dp))
                                                 Text(
                                                     nombreMes,
-                                                    fontSize = 10.sp,
-                                                    color = Color.Gray
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color(0xFF64748B)
                                                 )
                                             }
                                         }
                                     }
                                 } else {
-                                    Text(
-                                        "No hay datos suficientes",
-                                        fontSize = 14.sp,
-                                        color = Color.Gray,
-                                        modifier = Modifier.padding(vertical = 32.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(100.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "No hay datos suficientes",
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF94A3B8)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -439,30 +581,98 @@ fun MainScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                AnimatedButton(
-                                    text = "Registrar",
-                                    icon = Icons.Filled.Add,
-                                    gradient = AppColors.ExpenseGradient,
+                                // Botón Registrar (Rosa)
+                                Button(
                                     onClick = { navController.navigate("registro") },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                AnimatedButton(
-                                    text = "Categorías",
-                                    icon = Icons.Filled.Menu,
-                                    gradient = AppColors.CategoryGradient,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(Color(0xFFF43F5E), Color(0xFFEC4899))
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Registrar", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+
+                                // Botón Categorías (Naranja pastel)
+                                Button(
                                     onClick = { navController.navigate("categorias") },
-                                    modifier = Modifier.weight(1f)
-                                )
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(Color(0xFFFBBF24), Color(0xFFF97316))
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Filled.Menu, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Categorías", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
-                            AnimatedButton(
-                                text = "Ver Reportes Completos",
-                                icon = Icons.Filled.Star,
-                                gradient = Brush.linearGradient(
-                                    colors = listOf(Color(0xFFFF6B6B), Color(0xFFFFE66D))
-                                ),
+
+                            // Botón Ver Reportes Completos
+                            Button(
                                 onClick = { navController.navigate("reportes") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(Color(0xFF8B5CF6), Color(0xFFD946EF))
+                                            )
+                                        )
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Filled.Star, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Text("Ver Reportes Completos", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                        Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.White)
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -477,17 +687,21 @@ fun MainScreen(
                                 Text(
                                     "Mis Cuentas (${cuentas.size})",
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                                 TextButton(onClick = { navController.navigate("cuentas") }) {
-                                    Text("Administrar")
+                                    Text("Administrar", fontSize = 14.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.SemiBold)
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             if (cuentas.isEmpty()) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White)
                                 ) {
                                     Box(
                                         modifier = Modifier.padding(24.dp),
@@ -509,7 +723,7 @@ fun MainScreen(
                                     }
                                 }
                             } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                     cuentas.take(3).forEach { cuenta ->
                                         CuentaCardCompacta(
                                             cuenta = cuenta,
@@ -521,7 +735,7 @@ fun MainScreen(
                                             onClick = { navController.navigate("cuentas") },
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Ver todas las cuentas (${cuentas.size})")
+                                            Text("Ver todas las cuentas (${cuentas.size})", color = Color.White)
                                         }
                                     }
                                 }
@@ -541,17 +755,21 @@ fun MainScreen(
                                     "Movimientos Recientes",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
+                                    color = Color.White,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                                 TextButton(onClick = { navController.navigate("lista") }) {
-                                    Text("Ver todos")
+                                    Text("Ver todos →", fontSize = 13.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.SemiBold)
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(4.dp))
 
                             if (movimientosFiltrados.isEmpty()) {
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White)
                                 ) {
                                     Box(
                                         modifier = Modifier.padding(32.dp),
@@ -582,7 +800,7 @@ fun MainScreen(
                                             onClick = { navController.navigate("lista") },
                                             modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text("Ver todos los movimientos (${movimientos.size} total)")
+                                            Text("Ver todos los movimientos (${movimientos.size} total)", color = Color.White)
                                         }
                                     }
                                 }
@@ -618,6 +836,75 @@ fun MainScreen(
     }
 }
 
+// 🧭 Barra de navegación inferior
+@Composable
+fun EconoteBottomBar(
+    currentRoute: String,
+    onTabSelected: (String) -> Unit
+) {
+    NavigationBar(
+        containerColor = Color(0xFF0F0728),
+        tonalElevation = 8.dp
+    ) {
+        NavigationBarItem(
+            selected = currentRoute == "main",
+            onClick = { onTabSelected("main") },
+            icon = { Icon(Icons.Filled.Home, contentDescription = "Inicio") },
+            label = { Text("Inicio") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFC084FC),
+                selectedTextColor = Color(0xFFC084FC),
+                unselectedIconColor = Color(0xFF94A3B8),
+                unselectedTextColor = Color(0xFF94A3B8),
+                indicatorColor = Color(0xFF1E103F)
+            )
+        )
+        NavigationBarItem(
+            selected = currentRoute == "lista",
+            onClick = { onTabSelected("lista") },
+            icon = { Icon(Icons.Filled.List, contentDescription = "Movimientos") },
+            label = { Text("Movimientos") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFC084FC),
+                selectedTextColor = Color(0xFFC084FC),
+                unselectedIconColor = Color(0xFF94A3B8),
+                unselectedTextColor = Color(0xFF94A3B8),
+                indicatorColor = Color(0xFF1E103F)
+            )
+        )
+        NavigationBarItem(
+            selected = currentRoute == "reportes",
+            onClick = { onTabSelected("reportes") },
+            icon = { Icon(Icons.Filled.Star, contentDescription = "Reportes") },
+            label = { Text("Reportes") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFC084FC),
+                selectedTextColor = Color(0xFFC084FC),
+                unselectedIconColor = Color(0xFF94A3B8),
+                unselectedTextColor = Color(0xFF94A3B8),
+                indicatorColor = Color(0xFF1E103F)
+            )
+        )
+        NavigationBarItem(
+            selected = currentRoute == "perfil",
+            onClick = { onTabSelected("perfil") },
+            icon = { Icon(Icons.Filled.Person, contentDescription = "Perfil") },
+            label = { Text("Perfil") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFC084FC),
+                selectedTextColor = Color(0xFFC084FC),
+                unselectedIconColor = Color(0xFF94A3B8),
+                unselectedTextColor = Color(0xFF94A3B8),
+                indicatorColor = Color(0xFF1E103F)
+            )
+        )
+    }
+}
+
+// -------------------------------------------------------------
+// Drawer & Cards Helpers
+// -------------------------------------------------------------
+
 @Composable
 fun EconoteDrawerContent(
     currentRoute: String,
@@ -632,7 +919,6 @@ fun EconoteDrawerContent(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        // --- Header ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -658,7 +944,7 @@ fun EconoteDrawerContent(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                "ECONOTE",
+                "MONVORA",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF1E293B)
@@ -669,7 +955,6 @@ fun EconoteDrawerContent(
         HorizontalDivider(color = Color(0xFFF1F5F9))
         Spacer(modifier = Modifier.height(12.dp))
 
-        // --- Main Menu Items ---
         DrawerItem(
             icon = Icons.Filled.Home,
             label = "Inicio",
@@ -703,14 +988,13 @@ fun EconoteDrawerContent(
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "MI ECONOTE",
+            "MI MONVORA",
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF94A3B8),
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
 
-        // --- Secondary Menu Items ---
         DrawerItem(
             icon = Icons.Filled.Person,
             label = "Mi perfil",
@@ -740,7 +1024,6 @@ fun EconoteDrawerContent(
         HorizontalDivider(color = Color(0xFFF1F5F9))
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Logout ---
         DrawerItem(
             icon = Icons.Filled.ExitToApp,
             label = "Cerrar sesión",
@@ -793,7 +1076,6 @@ fun DrawerItem(
     }
 }
 
-// 🆕 Card de Cuenta Compacta
 @Composable
 fun CuentaCardCompacta(
     cuenta: Account,
@@ -803,7 +1085,7 @@ fun CuentaCardCompacta(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -813,38 +1095,47 @@ fun CuentaCardCompacta(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Filled.Email,
-                contentDescription = null,
-                tint = Color(0xFF667eea),
-                modifier = Modifier.size(32.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(Color(0xFFEDE9FE), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.AccountBox,
+                    contentDescription = null,
+                    tint = Color(0xFF7C3AED),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     cuenta.name,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B)
                 )
                 if (cuenta.bank.isNotEmpty()) {
                     Text(
                         cuenta.bank,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = Color(0xFF64748B)
                     )
                 }
             }
             Text(
-                "S/. ${String.format("%.2f", cuenta.balance)}",
+                "S/ %.2f".format(cuenta.balance),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF4CAF50)
+                color = Color(0xFF10B981)
             )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = Color(0xFF94A3B8))
         }
     }
 }
 
-// 🆕 Card de Movimiento Compacto
 @Composable
 fun MovimientoCardCompacto(
     movimiento: Expense,
@@ -852,51 +1143,56 @@ fun MovimientoCardCompacto(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (movimiento.type == "Gasto")
-                Color(0xFFFFF8F0) else Color(0xFFF1F8F4)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                if (movimiento.type == "Gasto")
-                    Icons.Filled.ArrowDropDown else Icons.Filled.KeyboardArrowUp,
-                contentDescription = null,
-                tint = if (movimiento.type == "Gasto")
-                    Color(0xFFFF5722) else Color(0xFF4CAF50),
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(
+                        if (movimiento.type == "Gasto") Color(0xFFFEE2E2) else Color(0xFFECFDF5),
+                        RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (movimiento.type == "Gasto") Icons.Filled.ArrowDropDown else Icons.Filled.KeyboardArrowUp,
+                    contentDescription = null,
+                    tint = if (movimiento.type == "Gasto") Color(0xFFEF4444) else Color(0xFF10B981),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     movimiento.description,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E293B),
                     maxLines = 1
                 )
                 Text(
                     "${cuenta?.name ?: "Cuenta"} • ${movimiento.date}",
-                    fontSize = 11.sp,
-                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    color = Color(0xFF94A3B8),
                     maxLines = 1
                 )
             }
 
             Text(
-                "${if (movimiento.type == "Gasto") "-" else "+"}S/. ${movimiento.amount}",
+                "${if (movimiento.type == "Gasto") "-" else "+"}S/ ${movimiento.amount}",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (movimiento.type == "Gasto")
-                    Color(0xFFFF5722) else Color(0xFF4CAF50)
+                color = if (movimiento.type == "Gasto") Color(0xFFEF4444) else Color(0xFF10B981)
             )
         }
     }
@@ -909,12 +1205,8 @@ fun CuentaCardDetallada(
     cantidadMovimientos: Int,
     onClick: () -> Unit
 ) {
-    // Gradiente simple y universal
     val accountGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF8360c3),  // Azul
-            Color(0xFF2ebf91)   // Azul claro
-        )
+        colors = listOf(Color(0xFF8360c3), Color(0xFF2ebf91))
     )
 
     Card(
@@ -950,7 +1242,7 @@ fun CuentaCardDetallada(
                         }
                     }
                     Icon(
-                        Icons.Filled.Email,
+                        Icons.Filled.AccountBox,
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
@@ -965,7 +1257,7 @@ fun CuentaCardDetallada(
                     fontSize = 12.sp
                 )
                 Text(
-                    "S/. ${String.format("%.2f", cuenta.balance)}",  // ✅ CAMBIO: Formatear el Double
+                    "S/ %.2f".format(cuenta.balance),
                     color = Color.White,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
@@ -984,7 +1276,7 @@ fun CuentaCardDetallada(
                             fontSize = 12.sp
                         )
                         Text(
-                            "S/. %.2f".format(gastoTotal),
+                            "S/ %.2f".format(gastoTotal),
                             color = Color(0xFFFFB74D),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -1019,11 +1311,8 @@ fun MovimientoCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (movimiento.type == "Gasto")
-                Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
-        )
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -1035,17 +1324,15 @@ fun MovimientoCard(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        if (movimiento.type == "Gasto")
-                            AppColors.ExpenseGradient else AppColors.IncomeGradient,
+                        if (movimiento.type == "Gasto") Color(0xFFFEE2E2) else Color(0xFFECFDF5),
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if (movimiento.type == "Gasto")
-                        Icons.Filled.ArrowDropDown else Icons.Filled.KeyboardArrowUp,
+                    if (movimiento.type == "Gasto") Icons.Filled.ArrowDropDown else Icons.Filled.KeyboardArrowUp,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = if (movimiento.type == "Gasto") Color(0xFFEF4444) else Color(0xFF10B981),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -1056,25 +1343,25 @@ fun MovimientoCard(
                 Text(
                     movimiento.description,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    color = Color(0xFF1E293B)
                 )
                 Text(
                     cuenta?.name ?: "Cuenta desconocida",
-                    color = Color.Gray,
+                    color = Color(0xFF94A3B8),
                     fontSize = 14.sp
                 )
                 Text(
                     movimiento.date,
-                    color = Color.Gray,
+                    color = Color(0xFF94A3B8),
                     fontSize = 12.sp
                 )
             }
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    "${if (movimiento.type == "Gasto") "-" else "+"}S/. ${movimiento.amount}",
-                    color = if (movimiento.type == "Gasto")
-                        Color(0xFFFF5722) else Color(0xFF4CAF50),
+                    "${if (movimiento.type == "Gasto") "-" else "+"}S/ ${movimiento.amount}",
+                    color = if (movimiento.type == "Gasto") Color(0xFFEF4444) else Color(0xFF10B981),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1082,7 +1369,7 @@ fun MovimientoCard(
                     Icon(
                         Icons.Filled.Delete,
                         contentDescription = "Eliminar",
-                        tint = Color(0xFFE57373),
+                        tint = Color(0xFFEF4444),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -1133,7 +1420,7 @@ fun MovimientosPorCuentaDialog(
             Column {
                 Text(cuenta.name, fontWeight = FontWeight.Bold)
                 Text(
-                    "Saldo: S/. ${String.format("%.2f", cuenta.balance)}",  // ✅ CAMBIO
+                    "Saldo: S/ %.2f".format(cuenta.balance),
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -1145,12 +1432,12 @@ fun MovimientosPorCuentaDialog(
                     .fillMaxWidth()
                     .heightIn(max = 400.dp)
             ) {
-                // Resumen
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFF5F5F5)
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -1161,16 +1448,16 @@ fun MovimientosPorCuentaDialog(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Ingresos", fontSize = 12.sp, color = Color.Gray)
                             Text(
-                                "S/. %.2f".format(ingresoTotal),
-                                color = Color(0xFF4CAF50),
+                                "S/ %.2f".format(ingresoTotal),
+                                color = Color(0xFF10B981),
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Gastos", fontSize = 12.sp, color = Color.Gray)
                             Text(
-                                "S/. %.2f".format(gastoTotal),
-                                color = Color(0xFFFF5722),
+                                "S/ %.2f".format(gastoTotal),
+                                color = Color(0xFFEF4444),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -1178,7 +1465,8 @@ fun MovimientosPorCuentaDialog(
                             Text("Total", fontSize = 12.sp, color = Color.Gray)
                             Text(
                                 "${movimientos.size}",
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1E293B)
                             )
                         }
                     }
@@ -1186,6 +1474,7 @@ fun MovimientosPorCuentaDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                (movimientos.isEmpty())
                 if (movimientos.isEmpty()) {
                     Box(
                         modifier = Modifier
@@ -1203,10 +1492,9 @@ fun MovimientosPorCuentaDialog(
                             val mov = movimientos[index]
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (mov.type == "Gasto")
-                                        Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
-                                )
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(12.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1218,18 +1506,18 @@ fun MovimientosPorCuentaDialog(
                                         Text(
                                             mov.description,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF1E293B)
                                         )
                                         Text(
                                             mov.date,
                                             fontSize = 12.sp,
-                                            color = Color.Gray
+                                            color = Color(0xFF94A3B8)
                                         )
                                     }
                                     Text(
-                                        "${if (mov.type == "Gasto") "-" else "+"}S/. ${mov.amount}",
-                                        color = if (mov.type == "Gasto")
-                                            Color(0xFFFF5722) else Color(0xFF4CAF50),
+                                        "${if (mov.type == "Gasto") "-" else "+"}S/ ${mov.amount}",
+                                        color = if (mov.type == "Gasto") Color(0xFFEF4444) else Color(0xFF10B981),
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1243,6 +1531,8 @@ fun MovimientosPorCuentaDialog(
             TextButton(onClick = onDismiss) {
                 Text("Cerrar")
             }
-        }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color(0xFFF8F9FF)
     )
 }

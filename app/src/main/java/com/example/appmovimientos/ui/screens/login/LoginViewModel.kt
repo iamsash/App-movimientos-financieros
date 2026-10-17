@@ -1,8 +1,17 @@
 package com.example.appmovimientos.ui.screens.login
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.appmovimientos.data.repository.AuthRepository
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
+
     private val authRepository: AuthRepository = AuthRepository()
 ) : ViewModel() {
 
@@ -85,6 +95,77 @@ class LoginViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Error al iniciar sesión") }
+            }
+        }
+    }
+
+    fun loginWithGoogle(context: Context, onNavigateMain: () -> Unit, onNavigateTerminos: () -> Unit) {
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        viewModelScope.launch {
+            try {
+                val credentialManager = CredentialManager.create(context)
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId("741518921630-slb7lv7qicfd4etmdclckod0u0he52t5.apps.googleusercontent.com")
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(context, request)
+                val credential = result.credential
+
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    val googleIdToken = googleIdTokenCredential.idToken
+
+                    authRepository.signInWithGoogleIdToken(googleIdToken)
+                    val uid = authRepository.getCurrentUserUid()
+                    if (uid != null) {
+                        val hasAccepted = try {
+                            authRepository.checkUserAcceptance(uid)
+                        } catch (e: Exception) {
+                            false
+                        }
+
+                        if (!hasAccepted) {
+                            val profile = try {
+                                authRepository.getUserProfile(uid)
+                            } catch (e: Exception) {
+                                emptyMap()
+                            }
+                            if (profile["correo"].isNullOrBlank()) {
+                                val userData = mapOf(
+                                    "nombre" to (googleIdTokenCredential.displayName ?: "Usuario Google"),
+                                    "correo" to (googleIdTokenCredential.id ?: ""),
+                                    "usuario" to (googleIdTokenCredential.id?.substringBefore("@") ?: "google_user")
+                                )
+                                authRepository.saveUserData(uid, userData)
+                            }
+                        }
+
+                        _uiState.update { it.copy(isLoading = false) }
+                        if (hasAccepted) {
+                            onNavigateMain()
+                        } else {
+                            onNavigateTerminos()
+                        }
+                    } else {
+                        _uiState.update { it.copy(isLoading = false, errorMessage = "Error al autenticar con Google") }
+                    }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Credencial de Google no válida") }
+                }
+            } catch (e: NoCredentialException) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "NoCredentialException: ${e.message}") }
+            } catch (e: GetCredentialCancellationException) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Cancelado por el usuario") }
+            } catch (e: GetCredentialException) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "GetCredentialException [${e.type}]: ${e.message}") }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Error [${e.javaClass.simpleName}]: ${e.message}") }
             }
         }
     }

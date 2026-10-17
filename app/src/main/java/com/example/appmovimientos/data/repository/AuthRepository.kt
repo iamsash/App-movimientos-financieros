@@ -1,5 +1,5 @@
 package com.example.appmovimientos.data.repository
-
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -15,6 +15,11 @@ class AuthRepository {
 
     suspend fun signInWithEmailAndPassword(email: String, pass: String): AuthResult {
         return auth.signInWithEmailAndPassword(email, pass).await()
+    }
+
+    suspend fun signInWithGoogleIdToken(idToken: String): AuthResult {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        return auth.signInWithCredential(credential).await()
     }
 
     suspend fun createUserWithEmailAndPassword(email: String, pass: String): AuthResult {

@@ -1,22 +1,19 @@
 package com.example.appmovimientos.ui.screens.login
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -24,7 +21,65 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.appmovimientos.R
+
+@Composable
+fun MonvoraLoginLogo() {
+    Box(
+        modifier = Modifier
+            .size(96.dp)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF60A5FA), // Light blue top-left
+                        Color(0xFF9333EA), // Violet
+                        Color(0xFFEC4899)  // Pink bottom-right
+                    )
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(64.dp)) {
+            val w = size.width
+            val h = size.height
+
+            val stroke = 7.dp.toPx()
+
+            // Draw white M
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(w * 0.16f, h * 0.75f)
+                lineTo(w * 0.16f, h * 0.35f)
+                lineTo(w * 0.38f, h * 0.65f)
+                lineTo(w * 0.60f, h * 0.35f)
+            }
+            drawPath(
+                path = path,
+                color = Color.White,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = stroke,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    join = androidx.compose.ui.graphics.StrokeJoin.Round
+                )
+            )
+
+            // 3 cyan/light blue financial bars on the right
+            val barW = 5.dp.toPx()
+            val spacing = 3.dp.toPx()
+            val startX = w * 0.67f
+            val barHeights = listOf(h * 0.3f, h * 0.5f, h * 0.72f)
+
+            barHeights.forEachIndexed { index, bh ->
+                val bx = startX + index * (barW + spacing)
+                val by = h * 0.8f - bh
+                drawRect(
+                    color = Color(0xFF38BDF8), // Bright cyan
+                    topLeft = androidx.compose.ui.geometry.Offset(bx, by),
+                    size = androidx.compose.ui.geometry.Size(barW, bh)
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun TechFinancialBackground() {
@@ -97,6 +152,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -106,32 +162,27 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- Logo personalizado ---
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+            // --- Logo MONVORA ---
+            MonvoraLoginLogo()
 
-            Spacer(modifier = Modifier.height(32.dp))
-            Text("ECONOTE", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "MONVORA",
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.5.sp
+            )
+            Spacer(modifier = Modifier.height(28.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
@@ -139,8 +190,9 @@ fun LoginScreen(
                         value = uiState.correo,
                         onValueChange = { viewModel.onCorreoChange(it) },
                         label = { Text("Correo electrónico o Usuario") },
-                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null, tint = Color(0xFF6366F1)) },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
                         singleLine = true
                     )
 
@@ -150,22 +202,25 @@ fun LoginScreen(
                         value = uiState.contrasena,
                         onValueChange = { viewModel.onContrasenaChange(it) },
                         label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF6366F1)) },
                         trailingIcon = {
                             IconButton(onClick = { viewModel.toggleMostrarContrasena() }) {
                                 Icon(
-                                    if (uiState.mostrarContrasena) Icons.Filled.Lock else Icons.Filled.Lock,
-                                    contentDescription = null
+                                    if (uiState.mostrarContrasena) Icons.Filled.Menu else Icons.Filled.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFF94A3B8)
                                 )
                             }
                         },
                         visualTransformation = if (uiState.mostrarContrasena) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
                         singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Botón Iniciar Sesión con degradado
                     Button(
                         onClick = {
                             viewModel.login(
@@ -183,26 +238,88 @@ fun LoginScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
+                            .height(54.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                        } else {
-                            Text("Iniciar Sesión", fontSize = 16.sp, color = Color.White)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(Color(0xFF8B5CF6), Color(0xFFEC4899))
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
+                            } else {
+                                Text("Iniciar Sesión", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Botón Continuar con Google
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.loginWithGoogle(
+                                context = context,
+                                onNavigateMain = {
+                                    navController.navigate("main") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onNavigateTerminos = {
+                                    navController.navigate("legacyAceptacion") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFE2E8F0))))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            // Google G symbol representation / Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(Color(0xFFEA4335), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("G", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Continuar con Google", fontSize = 15.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Bold)
                         }
                     }
 
                     uiState.errorMessage?.let {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(it, color = Color.Red, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(it, color = Color.Red, fontSize = 13.sp)
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    TextButton(onClick = { navController.navigate("registroUsuario") }) {
-                        Text("¿No tienes cuenta?", color = Color.Gray)
-                        Text("Regístrate aquí", color = Color.Red)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        TextButton(onClick = { navController.navigate("registroUsuario") }) {
+                            Text("¿No tienes cuenta? ", color = Color(0xFF64748B), fontSize = 14.sp)
+                            Text("Regístrate aquí", color = Color(0xFF7C3AED), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
